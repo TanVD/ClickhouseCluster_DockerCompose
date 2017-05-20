@@ -1,0 +1,76 @@
+version: '2'
+services:
+    zoo1:
+        image: zookeeper:latest
+        expose:
+            - "2181"
+            - "2888"
+            - "3888"
+        environment:
+            ZOO_MY_ID: "1"
+            ZOO_SERVERS: server.1=0.0.0.0:2888:3888 server.2=zoo2:2888:3888 server.3=zoo3:2888:3888
+
+    zoo2:
+        image: zookeeper:latest
+        expose:
+            - "2181"
+            - "2888"
+            - "3888"
+        environment:
+            ZOO_MY_ID: "2"
+            ZOO_SERVERS: server.1=zoo1:2888:3888 server.2=0.0.0.0:2888:3888 server.3=zoo3:2888:3888
+
+    zoo3:
+        image: zookeeper:latest
+        expose:
+            - "2181"
+            - "2888"
+            - "3888"
+        environment:
+            ZOO_MY_ID: "3"
+            ZOO_SERVERS: server.1=zoo1:2888:3888 server.2=zoo2:2888:3888 server.3=0.0.0.0:2888:3888
+
+    clickhouse1:
+        image: yandex/clickhouse-server
+        expose:
+          #replica sync port
+          - "9010"
+        ports:  
+          #client port
+          - "9001:9000"
+        depends_on: 
+          - zoo1
+          - zoo2
+          - zoo3
+        volumes:
+          - ./config_1.xml:/etc/clickhouse-server/config.xml
+          
+    clickhouse2:
+        image: yandex/clickhouse-server
+        expose:
+          #replica sync port
+          - "9011"
+        ports:  
+          #client port
+          - "9002:9000"
+        depends_on: 
+          - zoo1
+          - zoo2
+          - zoo3
+        volumes:
+          - ./config_2.xml:/etc/clickhouse-server/config.xml
+
+    clickhouse3:
+        image: yandex/clickhouse-server
+        expose: 
+          #replica sync port
+          - "9012"
+        ports:  
+          #client port
+          - "9003:9000"
+        depends_on: 
+          - zoo1
+          - zoo2
+          - zoo3
+        volumes:
+          - ./config_3.xml:/etc/clickhouse-server/config.xml
